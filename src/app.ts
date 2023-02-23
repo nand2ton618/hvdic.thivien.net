@@ -1,5 +1,6 @@
 import ankiAxios from './ankiAxios'
 import crawl, { CrawlData } from './crawl'
+import { getPosition } from './rateLimit'
 
 type CardAction = {
   action: string
@@ -36,8 +37,6 @@ const getNotes = async (): Promise<any[]> => {
 }
 
 const updateNote = async (noteId: number, han: string) => {
-  console.log('UPDATENOTE', noteId, han)
-
   const updateNoteFields: CardAction = {
     action: 'updateNoteFields',
     version: 6,
@@ -61,11 +60,24 @@ const updateNote = async (noteId: number, han: string) => {
 const run = async () => {
   const notes = await getNotes()
 
-  for (let note of notes) {
+  const position = getPosition()
+
+  /* can't pass rate-limit */
+
+  // for (let note of notes) {
+  //   const crawledData = await crawl(note.fields.Kanji.value)
+  //   console.log('Updating ', note.noteId, note.fields.Kanji.value, crawledData)
+  //   await updateNote(note.noteId, crawledData)
+  //   console.log('Updated  ', note.noteId, note.fields.Kanji.value)
+  // }
+
+  // use crontab instead
+  for (let i = position; i < position + 100; i++) {
+    const note = notes[i]
     const crawledData = await crawl(note.fields.Kanji.value)
 
     console.log('Updating ', note.noteId, note.fields.Kanji.value, crawledData)
-    // await updateNote(note.noteId, formatedData)
+    await updateNote(note.noteId, crawledData)
     console.log('Updated  ', note.noteId, note.fields.Kanji.value)
   }
 }
