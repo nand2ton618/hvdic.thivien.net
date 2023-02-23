@@ -11,7 +11,7 @@ const crawl = async (kanji: string) => {
   const { data } = await axios.get(url + kanji)
   const $ = load(data)
 
-  const result: CrawlData = {}
+  const crawledData: CrawlData = {}
 
   const spell = $('.hvres')
     .children('.hvres-header')
@@ -22,13 +22,19 @@ const crawl = async (kanji: string) => {
     const detailElement = $(e).parent().parent().next('.hvres-details')
     const hvresSourceElement = detailElement.children('.hvres-source').first()
     if (hvresSourceElement.text() === 'Từ điển phổ thông') {
-      result[$(e).text().trim()] = hvresSourceElement.next().text()
+      crawledData[$(e).text().trim()] = hvresSourceElement.next().text()
     } else {
-      result[$(e).text().trim()] = ''
+      crawledData[$(e).text().trim()] = ''
     }
   })
 
-  return result
+  let res: string = ''
+  Object.keys(crawledData).map((k) => {
+    if (crawledData[k] === '') res += k + '<br>'
+    else res += k + ': ' + crawledData[k].split('\n').join(', ') + '<br>'
+  })
+  res.slice(0, -4)
+  return res
 }
 
 export default crawl

@@ -7,60 +7,32 @@ type CardAction = {
   params: any
 }
 
-const deckName = 'Kanji'
-
-const getDeckStats: CardAction = {
-  action: 'getDeckStats',
-  version: 6,
-  params: {
-    decks: [deckName],
-  },
-}
-
-const findNotes: CardAction = {
-  action: 'findNotes',
-  version: 6,
-  params: {
-    query: deckName,
-  },
-}
-
-const notesInfo: CardAction = {
-  action: 'notesInfo',
-  version: 6,
-  params: {
-    notes: [],
-  },
-}
+const DECKNAME = 'Kanji'
 
 const getNotes = async (): Promise<any[]> => {
-  const res = await ankiAxios.post('/', findNotes)
-  if (res.data.error !== null) {
-    throw new Error(res.data.error)
+  const findNotes: CardAction = {
+    action: 'findNotes',
+    version: 6,
+    params: {
+      query: DECKNAME,
+    },
   }
+  const res = await ankiAxios.post('/', findNotes)
+
+  const notesInfo: CardAction = {
+    action: 'notesInfo',
+    version: 6,
+    params: {
+      notes: [],
+    },
+  }
+
   const noteIds = res.data.result
   notesInfo.params.notes = noteIds
-
   const res1 = await ankiAxios.post('/', notesInfo)
   const notes = res1.data.result
 
   return notes
-}
-
-const getKanjiCharacter = (arr: any[]): string[] => {
-  const kanji: string[] = []
-  for (let note of arr) {
-    kanji.push(note.fields.Kanji.value)
-  }
-  return kanji
-}
-
-const formatData = (data: CrawlData) => {
-  let res: string = ''
-  Object.keys(data).map((k) => {
-    res += k + ': ' + data[k].split('\n').join(', ') + '\n'
-  })
-  return res.trim()
 }
 
 const updateNote = async (noteId: number, han: string) => {
@@ -83,6 +55,7 @@ const updateNote = async (noteId: number, han: string) => {
   updateNoteFields.params.note.fields.han = han
 
   const res = await ankiAxios.post('/', updateNoteFields)
+  // if (res.data.error) print(error)
 }
 
 const run = async () => {
@@ -90,16 +63,10 @@ const run = async () => {
 
   for (let note of notes) {
     const crawledData = await crawl(note.fields.Kanji.value)
-    const formatedData = formatData(crawledData)
 
-    console.log(
-      'Updating... ',
-      note.noteId,
-      note.fields.Kanji.value,
-      formatedData
-    )
+    console.log('Updating ', note.noteId, note.fields.Kanji.value, crawledData)
     // await updateNote(note.noteId, formatedData)
-    console.log('Updated!!! ', note.noteId, note.fields.Kanji.value)
+    console.log('Updated  ', note.noteId, note.fields.Kanji.value)
   }
 }
 run()
